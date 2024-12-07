@@ -1,12 +1,22 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
 }
 
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
+val stripeKey: String = localProperties.getProperty("stripeKey") ?: ""
+val apiUrl :String = localProperties.getProperty("apiUrl") ?: ""
+
 android {
     namespace = "com.imdmp.stripelearn"
     compileSdk = 34
-
     defaultConfig {
         applicationId = "com.imdmp.stripelearn"
         minSdk = 24
@@ -18,12 +28,24 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "BASE_URL",
+                "\"$apiUrl\""
+            )
+
+            buildConfigField("String", "STRIPE_KEY", "\"$stripeKey\"")
+        }
         release {
+            buildConfigField("String", "BASE_URL", "\"localhost:3000/api/\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "STRIPE_KEY", "\"$stripeKey\"")
+
         }
     }
     compileOptions {
@@ -32,6 +54,10 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+
+    buildFeatures{
+        buildConfig = true
     }
 }
 
@@ -45,4 +71,13 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp.logging)
+
+    // Koin
+    implementation(libs.koin.android)
+
+    implementation(libs.stripe)
 }
